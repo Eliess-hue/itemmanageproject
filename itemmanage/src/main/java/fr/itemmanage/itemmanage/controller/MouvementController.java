@@ -1,13 +1,17 @@
 package fr.itemmanage.itemmanage.controller;
 
-import fr.itemmanage.itemmanage.dto.request.MouvementRequest;
+import fr.itemmanage.itemmanage.dto.response.MouvementHistoriqueResponse;
 import fr.itemmanage.itemmanage.dto.response.MouvementResponse;
+import fr.itemmanage.itemmanage.dto.request.MouvementRequest;
 import fr.itemmanage.itemmanage.service.MouvementService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/mouvements")
@@ -17,7 +21,36 @@ public class MouvementController {
     private final MouvementService mouvementService;
 
     @PostMapping
-    public MouvementResponse enregistrer(@RequestBody MouvementRequest request) {
-        return mouvementService.enregistrerMouvement(request);
+    public ResponseEntity<MouvementResponse> enregistrer(
+            @Valid @RequestBody MouvementRequest request
+    ) {
+        MouvementResponse response =
+                mouvementService.enregistrerMouvement(request);
+
+        URI location = URI.create("/api/mouvements/" + response.id());
+
+        return ResponseEntity.created(location).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<MouvementHistoriqueResponse>> rechercher(
+            @RequestParam(required = false) String produitId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Instant dateDebut,
+            @RequestParam(required = false) Instant dateFin,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int taille
+    ) {
+        Page<MouvementHistoriqueResponse> response =
+                mouvementService.rechercher(
+                        produitId,
+                        type,
+                        dateDebut,
+                        dateFin,
+                        page,
+                        taille
+                );
+
+        return ResponseEntity.ok(response);
     }
 }

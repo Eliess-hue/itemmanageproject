@@ -1,15 +1,16 @@
 package fr.itemmanage.itemmanage.controller;
 
 import fr.itemmanage.itemmanage.dto.request.ProduitFilterRequest;
+import fr.itemmanage.itemmanage.dto.request.ProduitRequest;
 import fr.itemmanage.itemmanage.dto.response.ProduitResponse;
 import fr.itemmanage.itemmanage.service.ProduitService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/produits")
@@ -19,7 +20,7 @@ public class ProduitController {
     private final ProduitService produitService;
 
     @GetMapping("/search")
-    public List<ProduitResponse> search(
+    public ResponseEntity<Page<ProduitResponse>> search(
             @RequestParam(required = false) String nom,
             @RequestParam(required = false) String categorieId,
             @RequestParam(required = false) String etatStock,
@@ -29,8 +30,53 @@ public class ProduitController {
             @RequestParam(defaultValue = "10") int taille
     ) {
         ProduitFilterRequest filtre = new ProduitFilterRequest(
-                nom, categorieId, etatStock, triChamp, triDirection, page, taille
+                nom,
+                categorieId,
+                etatStock,
+                triChamp,
+                triDirection,
+                page,
+                taille
         );
-        return produitService.search(filtre);
+
+        return ResponseEntity.ok(produitService.search(filtre));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProduitResponse> getById(
+            @PathVariable String id
+    ) {
+        return ResponseEntity.ok(produitService.getById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<ProduitResponse> create(
+            @Valid @RequestBody ProduitRequest request
+    ) {
+        ProduitResponse response = produitService.create(request);
+
+        URI location = URI.create("/api/produits/" + response.id());
+
+        return ResponseEntity
+                .created(location)
+                .body(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProduitResponse> update(
+            @PathVariable String id,
+            @Valid @RequestBody ProduitRequest request
+    ) {
+        return ResponseEntity.ok(
+                produitService.update(id, request)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @PathVariable String id
+    ) {
+        produitService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
