@@ -194,7 +194,7 @@ public class ProduitService {
         produitRepository.deleteById(id);
     }
 
-    private Criteria criteriaPourEtat(String etat) {
+    Criteria criteriaPourEtat(String etat) {
 
         Document exprCritique = new Document(
                 "$lt",
