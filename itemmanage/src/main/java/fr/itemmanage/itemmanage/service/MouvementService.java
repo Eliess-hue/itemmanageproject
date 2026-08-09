@@ -1,20 +1,30 @@
 package fr.itemmanage.itemmanage.service;
 
 import fr.itemmanage.itemmanage.dto.request.MouvementRequest;
+import fr.itemmanage.itemmanage.dto.response.MouvementHistoriqueResponse;
 import fr.itemmanage.itemmanage.dto.response.MouvementResponse;
+import fr.itemmanage.itemmanage.enums.TypeMouvement;
 import fr.itemmanage.itemmanage.model.Mouvement;
 import fr.itemmanage.itemmanage.model.Produit;
 import fr.itemmanage.itemmanage.repository.MouvementRepository;
 import fr.itemmanage.itemmanage.repository.ProduitRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -50,6 +60,50 @@ public class MouvementService {
 
         Mouvement mouvementCree = mouvementRepository.save(mouvement);
         return toResponse(mouvementCree);
+    }
+
+    public Page<MouvementHistoriqueResponse> rechercher(String produitId, String type,
+                                                        Instant dateDebut, Instant dateFin,
+                                                        int page, int taille) {
+
+        Query query = new Query();
+
+        if (produitId != null && !produitId.isBlank()) {
+            query.addCriteria(Criteria.where("produitId").is(produitId));
+        }
+
+        if (type != null && !type.isBlank()) {
+            query.addCriteria(Criteria.where("type").is(TypeMouvement.valueOf(type.toUpperCase())));
+        }
+
+        if (dateDebut != null) {
+            query.addCriteria(Criteria.where("date").gte(dateDebut));
+        }
+
+        if (dateFin != null) {
+            query.addCriteria(Criteria.where("date").lte(dateFin));
+        }
+
+        long total = mongoTemplate.count(query, Mouvement.class);
+
+        query.with(Sort.by(Sort.Direction.DESC, "date"));
+        PageRequest pageable = PageRequest.of(page, taille);
+        query.with(pageable);
+
+        List<Mouvement> mouvements = mongoTemplate.find(query, Mouvement.class);
+
+        List<String> produitIds = mouvements.stream().map(Mouvement::getProduitId).distinct().toList();
+        Map<String, String> nomsProduits = produitRepository.findAllById(produitIds).stream()
+                .collect(Collectors.toMap(Produit::getId, Produit::getNom));
+
+        List<MouvementHistoriqueResponse> responses = mouvements.stream()
+                .map(m -> new MouvementHistoriqueResponse(
+                        m.getId(), m.getProduitId(), nomsProduits.get(m.getProduitId()),
+                        m.getType(), m.getQuantite(), m.getStockApres(), m.getDate()
+                ))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, total);
     }
 
     private MouvementResponse toResponse(Mouvement mouvement) {
