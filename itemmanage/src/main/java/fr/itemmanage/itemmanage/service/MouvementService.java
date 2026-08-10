@@ -4,6 +4,8 @@ import fr.itemmanage.itemmanage.dto.request.MouvementRequest;
 import fr.itemmanage.itemmanage.dto.response.MouvementHistoriqueResponse;
 import fr.itemmanage.itemmanage.dto.response.MouvementResponse;
 import fr.itemmanage.itemmanage.enums.TypeMouvement;
+import fr.itemmanage.itemmanage.exception.InvalidRequestException;
+import fr.itemmanage.itemmanage.exception.ResourceNotFoundException;
 import fr.itemmanage.itemmanage.model.Mouvement;
 import fr.itemmanage.itemmanage.model.Produit;
 import fr.itemmanage.itemmanage.repository.MouvementRepository;
@@ -40,11 +42,11 @@ public class MouvementService {
     public MouvementResponse enregistrerMouvement(MouvementRequest request) {
 
         if (request.quantite() == 0) {
-            throw new RuntimeException("La quantité d'un mouvement ne peut pas être nulle");
+            throw new InvalidRequestException("La quantité d'un mouvement ne peut pas être nulle");
         }
 
         produitRepository.findById(request.produitId())
-                .orElseThrow(() -> new RuntimeException("Produit introuvable : " + request.produitId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Produit introuvable : " + request.produitId()));
 
         Query query = new Query(where("id").is(request.produitId()));
         Update update = new Update().inc("quantiteActuelle", request.quantite());
@@ -62,9 +64,10 @@ public class MouvementService {
         return toResponse(mouvementCree);
     }
 
-    public Page<MouvementHistoriqueResponse> rechercher(String produitId, String type,
-                                                        Instant dateDebut, Instant dateFin,
-                                                        int page, int taille) {
+    public Page<MouvementHistoriqueResponse> rechercher(
+            String produitId, String type,
+            Instant dateDebut, Instant dateFin,
+            int page, int taille) {
 
         Query query = new Query();
 
@@ -73,7 +76,11 @@ public class MouvementService {
         }
 
         if (type != null && !type.isBlank()) {
-            query.addCriteria(Criteria.where("type").is(TypeMouvement.valueOf(type.toUpperCase())));
+            try {
+                query.addCriteria(Criteria.where("type").is(TypeMouvement.valueOf(type.toUpperCase())));
+            } catch (IllegalArgumentException e) {
+                throw new InvalidRequestException("Type de mouvement invalide : " + type);
+            }
         }
 
         if (dateDebut != null) {

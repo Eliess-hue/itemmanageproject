@@ -3,6 +3,8 @@ package fr.itemmanage.itemmanage.service;
 import fr.itemmanage.itemmanage.dto.request.ProduitFilterRequest;
 import fr.itemmanage.itemmanage.dto.request.ProduitRequest;
 import fr.itemmanage.itemmanage.dto.response.ProduitResponse;
+import fr.itemmanage.itemmanage.exception.ConflictException;
+import fr.itemmanage.itemmanage.exception.ResourceNotFoundException;
 import fr.itemmanage.itemmanage.model.Categorie;
 import fr.itemmanage.itemmanage.model.Produit;
 import fr.itemmanage.itemmanage.repository.CategorieRepository;
@@ -122,7 +124,7 @@ public class ProduitService {
     public ProduitResponse getById(String id) {
         Produit produit = produitRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Produit introuvable : " + id)
+                        new ResourceNotFoundException("Produit introuvable : " + id)
                 );
 
         String nomCategorie = categorieRepository
@@ -157,7 +159,7 @@ public class ProduitService {
     public ProduitResponse update(String id, ProduitRequest request) {
         Produit produit = produitRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Produit introuvable : " + id)
+                        new ResourceNotFoundException("Produit introuvable : " + id)
                 );
 
         produit.setNom(request.nom());
@@ -180,13 +182,13 @@ public class ProduitService {
 
     public void delete(String id) {
         if (!produitRepository.existsById(id)) {
-            throw new RuntimeException(
+            throw new ResourceNotFoundException(
                     "Produit introuvable : " + id
             );
         }
 
         if (mouvementRepository.existsByProduitId(id)) {
-            throw new RuntimeException(
+            throw new ConflictException(
                     "Impossible de supprimer un produit ayant des mouvements enregistrés"
             );
         }
