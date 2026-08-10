@@ -2,6 +2,7 @@ package fr.itemmanage.itemmanage.service;
 
 import fr.itemmanage.itemmanage.dto.request.CategorieRequest;
 import fr.itemmanage.itemmanage.dto.response.CategorieResponse;
+import fr.itemmanage.itemmanage.exception.ResourceNotFoundException;
 import fr.itemmanage.itemmanage.model.Categorie;
 import fr.itemmanage.itemmanage.repository.CategorieRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class CategorieService {
 
     public CategorieResponse rename(String id, CategorieRequest request) {
         Categorie categorie = categorieRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Catégorie introuvable : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Catégorie introuvable : " + id));
 
         categorie.setNom(request.nom());
         categorie.setDescription(request.description());
