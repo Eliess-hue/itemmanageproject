@@ -83,12 +83,18 @@ public class MouvementService {
             }
         }
 
-        if (dateDebut != null) {
-            query.addCriteria(Criteria.where("date").gte(dateDebut));
-        }
+        if (dateDebut != null || dateFin != null) {
+            Criteria dateCriteria = Criteria.where("date");
 
-        if (dateFin != null) {
-            query.addCriteria(Criteria.where("date").lte(dateFin));
+            if (dateDebut != null) {
+                dateCriteria.gte(dateDebut);
+            }
+
+            if (dateFin != null) {
+                dateCriteria.lte(dateFin);
+            }
+
+            query.addCriteria(dateCriteria);
         }
 
         long total = mongoTemplate.count(query, Mouvement.class);

@@ -3,9 +3,11 @@ package fr.itemmanage.itemmanage.config;
 import fr.itemmanage.itemmanage.model.Categorie;
 import fr.itemmanage.itemmanage.repository.CategorieRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 public class DataSeeder implements CommandLineRunner {
 
     private static final String NOM_CATEGORIE_PAR_DEFAUT = "Non catégorisé";
