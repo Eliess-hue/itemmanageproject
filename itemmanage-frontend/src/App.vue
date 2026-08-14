@@ -1,4 +1,6 @@
 <script setup>
+import mouvementService from './api/mouvementService'
+import dashboardService from './api/dashboardService'
 import { RouterView } from 'vue-router'
 import {
   DialogRoot,
@@ -8,6 +10,38 @@ import {
   DialogContent,
   DialogTitle,
 } from 'reka-ui'
+import { onMounted } from 'vue'
+
+onMounted(async () => {
+
+  // Test dashboardService
+  try {
+    const dashboard = await dashboardService.getDashboard()
+    console.log('✅ dashboard :', dashboard)
+  } catch (error) {
+    console.error('❌ Erreur dashboard :', error.messages)
+  }
+
+  // Test mouvementService.rechercher() sans filtre
+  try {
+    const mouvements = await mouvementService.rechercher({ page: 0, taille: 10 })
+    console.log('✅ rechercher() sans filtre :', mouvements)
+  } catch (error) {
+    console.error('❌ Erreur rechercher() :', error.messages)
+  }
+
+  // Test mouvementService.enregistrer() — nécessite un vrai produitId existant en base
+  try {
+    const nouveauMouvement = await mouvementService.enregistrer({
+      produitId: 'REMPLACE_PAR_UN_VRAI_ID',
+      type: 'ENTREE',
+      quantite: 5,
+    })
+    console.log('✅ enregistrer() :', nouveauMouvement)
+  } catch (error) {
+    console.error('❌ Erreur enregistrer() :', error.messages)
+  }
+})
 </script>
 
 <template>
