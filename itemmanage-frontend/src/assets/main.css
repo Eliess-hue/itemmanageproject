@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: #E7E7E7;
+  --color-sidebar: #C7C7C7;
+  --color-topbar: #D7D7D7;
+  --color-accent: #8FFFAD;
+
+  --color-success: #438F47;
+  --color-danger: #B03E3E;
+  --color-warning: #C9A90C;
+  --color-info: #6EB4F0;
+
+  --color-text-primary: #000000;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
