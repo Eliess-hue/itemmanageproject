@@ -1,9 +1,8 @@
 <script setup>
 const links = [
-  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Dashboard', to: '/' },
   { label: 'Produits', to: '/produits' },
   { label: 'Catégories', to: '/categories' },
-  { label: 'Mouvements', to: '/mouvements' },
   { label: 'Historique', to: '/historique' },
 ]
 </script>
@@ -15,6 +14,7 @@ const links = [
         v-for="link in links"
         :key="link.to"
         :to="link.to"
+        :exact-active-class="link.to === '/' ? 'dashboard-active' : undefined"
         class="h-[50px] flex items-center px-5 text-[14px] text-text-primary"
       >
         {{ link.label }}
@@ -25,6 +25,9 @@ const links = [
 
 <style scoped>
 .router-link-active {
+  background-color: var(--color-accent);
+}
+.dashboard-active {
   background-color: var(--color-accent);
 }
 </style>
