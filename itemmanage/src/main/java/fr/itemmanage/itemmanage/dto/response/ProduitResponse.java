@@ -6,6 +6,7 @@ public record ProduitResponse(
         String description,
         String nomCategorie,
         int quantiteActuelle,
-        int stockMinimum
+        int stockMinimum,
+        String etatStock
 ) {
 }

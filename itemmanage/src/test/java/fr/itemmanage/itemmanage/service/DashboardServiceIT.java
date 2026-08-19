@@ -100,6 +100,10 @@ class DashboardServiceIT {
         assertThat(result.alertesCritiques())
                 .extracting(ProduitResponse::nom)
                 .containsExactly("Produit critique 1", "Produit critique 2");
+
+        assertThat(result.alertesCritiques())
+                .extracting(ProduitResponse::etatStock)
+                .containsOnly("CRITIQUE");
     }
 
     @Test
