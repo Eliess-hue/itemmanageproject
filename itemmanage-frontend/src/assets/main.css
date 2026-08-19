@@ -10,9 +10,11 @@
   --color-danger: #B03E3E;
   --color-danger-light: #FFB0B0;
   --color-warning: #C9A90C;
+  --color-warning-light: #FFED97;
   --color-info: #6EB4F0;
   --color-contours: #CFCFCF;
   --color-text-primary: #000000;
+  --color-text-secondary: #6B6B6B;
 }
 
 body {

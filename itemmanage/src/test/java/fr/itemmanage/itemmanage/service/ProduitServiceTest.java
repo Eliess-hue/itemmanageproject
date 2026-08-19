@@ -70,6 +70,7 @@ class ProduitServiceTest {
         assertThat(response.nomCategorie()).isEqualTo("Informatique");
         assertThat(response.quantiteActuelle()).isEqualTo(10);
         assertThat(response.stockMinimum()).isEqualTo(5);
+        assertThat(response.etatStock()).isEqualTo("OK");
 
         verify(produitRepository).findById("prod-1");
         verify(categorieRepository).findById("cat-1");
@@ -100,6 +101,7 @@ class ProduitServiceTest {
         assertThat(response.id()).isEqualTo("prod-1");
         assertThat(response.nom()).isEqualTo("Ordinateur");
         assertThat(response.nomCategorie()).isNull();
+        assertThat(response.etatStock()).isEqualTo("OK");
 
         verify(produitRepository).findById("prod-1");
         verify(categorieRepository).findById("cat-inexistante");
@@ -148,6 +150,9 @@ class ProduitServiceTest {
         produitSauvegarde.setQuantiteActuelle(0);
         produitSauvegarde.setStockMinimum(5);
 
+        when(categorieRepository.existsById("cat-1"))
+                .thenReturn(true);
+
         when(produitRepository.save(any(Produit.class)))
                 .thenReturn(produitSauvegarde);
 
@@ -179,19 +184,34 @@ class ProduitServiceTest {
 
         assertThat(produitEnvoye.getQuantiteActuelle())
                 .isZero();
-        assertThat(response.id()).isEqualTo("prod-1");
-        assertThat(response.nom()).isEqualTo("Ordinateur");
-        assertThat(response.description()).isEqualTo("PC portable");
-        assertThat(response.nomCategorie()).isEqualTo("Informatique");
-        assertThat(response.quantiteActuelle()).isZero();
-        assertThat(response.stockMinimum()).isEqualTo(5);
+
+        assertThat(response.id())
+                .isEqualTo("prod-1");
+
+        assertThat(response.nom())
+                .isEqualTo("Ordinateur");
+
+        assertThat(response.description())
+                .isEqualTo("PC portable");
+
+        assertThat(response.nomCategorie())
+                .isEqualTo("Informatique");
+
+        assertThat(response.quantiteActuelle())
+                .isZero();
+
+        assertThat(response.stockMinimum())
+                .isEqualTo(5);
+
+        assertThat(response.etatStock())
+                .isEqualTo("CRITIQUE");
 
         verify(produitRepository).save(any(Produit.class));
         verify(categorieRepository).findById("cat-1");
     }
 
     @Test
-    void createShouldCreateProductWithNullCategoryNameWhenCategoryDoesNotExist() {
+    void createShouldThrowWhenCategoryDoesNotExist() {
 
         // Given
         ProduitRequest request = new ProduitRequest(
@@ -201,31 +221,24 @@ class ProduitServiceTest {
                 5
         );
 
-        Produit produitSauvegarde = new Produit();
-        produitSauvegarde.setId("prod-1");
-        produitSauvegarde.setNom("Ordinateur");
-        produitSauvegarde.setDescription("PC portable");
-        produitSauvegarde.setCategorieId("cat-inexistante");
-        produitSauvegarde.setQuantiteActuelle(0);
-        produitSauvegarde.setStockMinimum(5);
+        when(categorieRepository.existsById("cat-inexistante"))
+                .thenReturn(false);
 
-        when(produitRepository.save(any(Produit.class)))
-                .thenReturn(produitSauvegarde);
+        // When / Then
+        assertThatThrownBy(() ->
+                produitService.create(request)
+        )
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Catégorie introuvable : cat-inexistante");
 
-        when(categorieRepository.findById("cat-inexistante"))
-                .thenReturn(Optional.empty());
+        // Le produit ne doit surtout pas être créé.
+        verify(produitRepository, never())
+                .save(any(Produit.class));
 
-        // When
-        ProduitResponse response = produitService.create(request);
-
-        // Then
-        assertThat(response.id()).isEqualTo("prod-1");
-        assertThat(response.nom()).isEqualTo("Ordinateur");
-        assertThat(response.nomCategorie()).isNull();
-        assertThat(response.quantiteActuelle()).isZero();
-
-        verify(produitRepository).save(any(Produit.class));
-        verify(categorieRepository).findById("cat-inexistante");
+        // On ne doit pas non plus chercher le nom de la catégorie
+        // après un échec de validation.
+        verify(categorieRepository, never())
+                .findById("cat-inexistante");
     }
 
     @Test
@@ -253,14 +266,20 @@ class ProduitServiceTest {
         when(produitRepository.findById("prod-1"))
                 .thenReturn(Optional.of(produit));
 
+        when(categorieRepository.existsById("cat-2"))
+                .thenReturn(true);
+
         when(categorieRepository.findById("cat-2"))
                 .thenReturn(Optional.of(categorie));
 
         when(produitRepository.save(any(Produit.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProduitResponse response = produitService.update("prod-1", request);
+        // When
+        ProduitResponse response =
+                produitService.update("prod-1", request);
 
+        // Then
         ArgumentCaptor<Produit> captor =
                 ArgumentCaptor.forClass(Produit.class);
 
@@ -290,6 +309,9 @@ class ProduitServiceTest {
 
         assertThat(response.nomCategorie())
                 .isEqualTo("Nouvelle catégorie");
+
+        assertThat(response.etatStock())
+                .isEqualTo("OK");
     }
 
     @Test
@@ -365,6 +387,72 @@ class ProduitServiceTest {
 
         verify(produitRepository)
                 .deleteById("prod-1");
+    }
+
+    @Test
+    void getByIdShouldReturnCritiqueStockState() {
+
+        Produit produit = new Produit();
+        produit.setId("prod-1");
+        produit.setNom("Produit critique");
+        produit.setCategorieId("cat-1");
+        produit.setQuantiteActuelle(4);
+        produit.setStockMinimum(5);
+
+        when(produitRepository.findById("prod-1"))
+                .thenReturn(Optional.of(produit));
+
+        when(categorieRepository.findById("cat-1"))
+                .thenReturn(Optional.empty());
+
+        ProduitResponse response = produitService.getById("prod-1");
+
+        assertThat(response.etatStock())
+                .isEqualTo("CRITIQUE");
+    }
+
+    @Test
+    void getByIdShouldReturnFaibleStockState() {
+
+        Produit produit = new Produit();
+        produit.setId("prod-1");
+        produit.setNom("Produit faible");
+        produit.setCategorieId("cat-1");
+        produit.setQuantiteActuelle(7);
+        produit.setStockMinimum(5);
+
+        when(produitRepository.findById("prod-1"))
+                .thenReturn(Optional.of(produit));
+
+        when(categorieRepository.findById("cat-1"))
+                .thenReturn(Optional.empty());
+
+        ProduitResponse response = produitService.getById("prod-1");
+
+        assertThat(response.etatStock())
+                .isEqualTo("FAIBLE");
+    }
+
+    @Test
+    void getByIdShouldReturnOkStockState() {
+
+        Produit produit = new Produit();
+        produit.setId("prod-1");
+        produit.setNom("Produit OK");
+        produit.setCategorieId("cat-1");
+        produit.setQuantiteActuelle(10);
+        produit.setStockMinimum(5);
+
+        when(produitRepository.findById("prod-1"))
+                .thenReturn(Optional.of(produit));
+
+        when(categorieRepository.findById("cat-1"))
+                .thenReturn(Optional.empty());
+
+        ProduitResponse response = produitService.getById("prod-1");
+
+        assertThat(response.etatStock())
+                .isEqualTo("OK");
     }
 
 }

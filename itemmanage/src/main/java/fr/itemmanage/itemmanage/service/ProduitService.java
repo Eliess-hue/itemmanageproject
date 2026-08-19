@@ -34,6 +34,8 @@ public class ProduitService {
     private final MouvementRepository mouvementRepository;
     private final ProduitRepository produitRepository;
 
+    private static final String NOM_CATEGORIE_PAR_DEFAUT = "Non catégorisé";
+
     public Page<ProduitResponse> search(ProduitFilterRequest filtre) {
 
         Query query = new Query();
@@ -136,11 +138,13 @@ public class ProduitService {
     }
 
     public ProduitResponse create(ProduitRequest request) {
-        Produit produit = new Produit();
 
+        String categorieId = resoudreCategorieId(request.categorieId());
+
+        Produit produit = new Produit();
         produit.setNom(request.nom());
         produit.setDescription(request.description());
-        produit.setCategorieId(request.categorieId());
+        produit.setCategorieId(categorieId);
         produit.setStockMinimum(request.stockMinimum());
 
         // Un produit commence toujours avec un stock à 0.
@@ -162,9 +166,11 @@ public class ProduitService {
                         new ResourceNotFoundException("Produit introuvable : " + id)
                 );
 
+        String categorieId = resoudreCategorieId(request.categorieId());
+
         produit.setNom(request.nom());
         produit.setDescription(request.description());
-        produit.setCategorieId(request.categorieId());
+        produit.setCategorieId(categorieId);
         produit.setStockMinimum(request.stockMinimum());
 
         // quantiteActuelle n'est volontairement jamais modifiée ici.
@@ -264,6 +270,38 @@ public class ProduitService {
         };
     }
 
+    private String determinerEtatStock(Produit produit) {
+
+        if (produit.getQuantiteActuelle() < produit.getStockMinimum()) {
+            return "CRITIQUE";
+        }
+
+        if (produit.getQuantiteActuelle() < produit.getStockMinimum() * 2) {
+            return "FAIBLE";
+        }
+
+        return "OK";
+    }
+
+    private String resoudreCategorieId(String categorieId) {
+
+        if (categorieId == null || categorieId.isBlank()) {
+            return categorieRepository.findByNom(NOM_CATEGORIE_PAR_DEFAUT)
+                    .map(Categorie::getId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "La catégorie par défaut 'Non catégorisé' est introuvable"
+                    ));
+        }
+
+        if (!categorieRepository.existsById(categorieId)) {
+            throw new ResourceNotFoundException(
+                    "Catégorie introuvable : " + categorieId
+            );
+        }
+
+        return categorieId;
+    }
+
     private ProduitResponse toResponse(
             Produit produit,
             String nomCategorie
@@ -274,7 +312,8 @@ public class ProduitService {
                 produit.getDescription(),
                 nomCategorie,
                 produit.getQuantiteActuelle(),
-                produit.getStockMinimum()
+                produit.getStockMinimum(),
+                determinerEtatStock(produit)
         );
     }
 }

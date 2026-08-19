@@ -55,8 +55,15 @@ public class DashboardService {
                 .with(PageRequest.of(0, 5));
         List<Produit> produitsCritiques = mongoTemplate.find(queryAlertes, Produit.class);
         List<ProduitResponse> alertesCritiques = produitsCritiques.stream()
-                .map(p -> new ProduitResponse(p.getId(), p.getNom(), p.getDescription(),
-                        null, p.getQuantiteActuelle(), p.getStockMinimum()))
+                .map(p -> new ProduitResponse(
+                        p.getId(),
+                        p.getNom(),
+                        p.getDescription(),
+                        null,
+                        p.getQuantiteActuelle(),
+                        p.getStockMinimum(),
+                        "CRITIQUE"
+                        ))
                 .toList();
 
         Query queryDerniersMouvements = new Query()
