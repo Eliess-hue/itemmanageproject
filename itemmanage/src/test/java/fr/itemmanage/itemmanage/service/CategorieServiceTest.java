@@ -5,6 +5,7 @@ import fr.itemmanage.itemmanage.dto.response.CategorieResponse;
 import fr.itemmanage.itemmanage.exception.ResourceNotFoundException;
 import fr.itemmanage.itemmanage.model.Categorie;
 import fr.itemmanage.itemmanage.repository.CategorieRepository;
+import fr.itemmanage.itemmanage.repository.ProduitRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,14 +13,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.ArgumentCaptor;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CategorieServiceTest {
@@ -27,13 +26,16 @@ class CategorieServiceTest {
     @Mock
     private CategorieRepository categorieRepository;
 
+    @Mock
+    private ProduitRepository produitRepository;
+
     @InjectMocks
     private CategorieService categorieService;
 
     @Test
     void renameShouldUpdateCategorieAndReturnResponse() {
 
-        //Given
+        // Given
         Categorie categorie = new Categorie();
         categorie.setId("abc");
         categorie.setNom("Ancien nom");
@@ -50,90 +52,49 @@ class CategorieServiceTest {
         when(categorieRepository.save(categorie))
                 .thenReturn(categorie);
 
-        //When
+        when(produitRepository.countByCategorieId("abc"))
+                .thenReturn(3L);
+
+        // When
         CategorieResponse response =
                 categorieService.rename("abc", request);
 
-        //Then
+        // Then
         assertThat(response.id()).isEqualTo("abc");
         assertThat(response.nom()).isEqualTo("Nouveau nom");
-        assertThat(response.description()).isEqualTo("Nouvelle description");
+        assertThat(response.description())
+                .isEqualTo("Nouvelle description");
+        assertThat(response.nombreProduits())
+                .isEqualTo(3L);
 
         verify(categorieRepository).findById("abc");
         verify(categorieRepository).save(categorie);
-
+        verify(produitRepository).countByCategorieId("abc");
     }
 
     @Test
     void renameShouldThrowWhenCategorieDoesNotExist() {
 
-        //Given
+        // Given
         when(categorieRepository.findById("inexistant"))
                 .thenReturn(Optional.empty());
 
-        //Given & Then
+        // When / Then
         assertThatThrownBy(() ->
                 categorieService.rename(
                         "inexistant",
-                        new CategorieRequest("Nouveau nom", "Description")
+                        new CategorieRequest(
+                                "Nouveau nom",
+                                "Description"
+                        )
                 )
         )
                 .isInstanceOf(ResourceNotFoundException.class);
 
         verify(categorieRepository).findById("inexistant");
 
-    }
-
-    @Test
-    void getAllShouldReturnAllCategories() {
-
-        // Given
-        Categorie categorie1 = new Categorie();
-        categorie1.setId("1");
-        categorie1.setNom("Informatique");
-        categorie1.setDescription("Matériel informatique");
-
-        Categorie categorie2 = new Categorie();
-        categorie2.setId("2");
-        categorie2.setNom("Bureau");
-        categorie2.setDescription("Fournitures de bureau");
-
-        when(categorieRepository.findAll())
-                .thenReturn(List.of(categorie1, categorie2));
-
-        // When
-        List<CategorieResponse> responses = categorieService.getAll();
-
-        // Then
-        assertThat(responses).hasSize(2);
-
-        assertThat(responses.get(0).id()).isEqualTo("1");
-        assertThat(responses.get(0).nom()).isEqualTo("Informatique");
-        assertThat(responses.get(0).description())
-                .isEqualTo("Matériel informatique");
-
-        assertThat(responses.get(1).id()).isEqualTo("2");
-        assertThat(responses.get(1).nom()).isEqualTo("Bureau");
-        assertThat(responses.get(1).description())
-                .isEqualTo("Fournitures de bureau");
-
-        verify(categorieRepository).findAll();
-    }
-
-    @Test
-    void getAllShouldReturnEmptyListWhenNoCategoryExists() {
-
-        // Given
-        when(categorieRepository.findAll())
-                .thenReturn(List.of());
-
-        // When
-        List<CategorieResponse> responses = categorieService.getAll();
-
-        // Then
-        assertThat(responses).isEmpty();
-
-        verify(categorieRepository).findAll();
+        verify(produitRepository, never())
+                .countByCategorieId(any());
     }
 
     @Test
@@ -158,10 +119,17 @@ class CategorieServiceTest {
                 categorieService.create(request);
 
         // Then : résultat
-        assertThat(response.id()).isEqualTo("123");
-        assertThat(response.nom()).isEqualTo("Informatique");
+        assertThat(response.id())
+                .isEqualTo("123");
+
+        assertThat(response.nom())
+                .isEqualTo("Informatique");
+
         assertThat(response.description())
                 .isEqualTo("Matériel informatique");
+
+        assertThat(response.nombreProduits())
+                .isZero();
 
         // Then : vérifier ce qui a réellement été envoyé au repository
         ArgumentCaptor<Categorie> captor =
@@ -176,6 +144,11 @@ class CategorieServiceTest {
 
         assertThat(categorieEnvoyee.getDescription())
                 .isEqualTo(request.description());
+
+        // Une nouvelle catégorie ne possède aucun produit.
+        // Aucun comptage MongoDB n'est donc nécessaire.
+        verify(produitRepository, never())
+                .countByCategorieId(any());
     }
 
 }

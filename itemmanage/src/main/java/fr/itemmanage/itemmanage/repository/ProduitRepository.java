@@ -4,4 +4,7 @@ import fr.itemmanage.itemmanage.model.Produit;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface ProduitRepository extends MongoRepository<Produit, String> {
+
+    long countByCategorieId(String categorieId);
+
 }
