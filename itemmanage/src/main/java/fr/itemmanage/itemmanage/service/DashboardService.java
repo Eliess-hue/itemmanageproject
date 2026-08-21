@@ -1,11 +1,9 @@
 package fr.itemmanage.itemmanage.service;
 
 import fr.itemmanage.itemmanage.dto.response.*;
-import fr.itemmanage.itemmanage.model.Categorie;
 import fr.itemmanage.itemmanage.model.Mouvement;
 import fr.itemmanage.itemmanage.model.Produit;
 import fr.itemmanage.itemmanage.repository.CategorieRepository;
-import fr.itemmanage.itemmanage.repository.MouvementRepository;
 import fr.itemmanage.itemmanage.repository.ProduitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +27,6 @@ public class DashboardService {
     private final MongoTemplate mongoTemplate;
     private final ProduitRepository produitRepository;
     private final CategorieRepository categorieRepository;
-    private final MouvementRepository mouvementRepository;
     private final ProduitService produitService; // réutilisation de criteriaPourEtat
 
     public DashboardResponse getDashboard() {
