@@ -3,6 +3,8 @@ package fr.itemmanage.itemmanage.controller;
 import fr.itemmanage.itemmanage.dto.request.CategorieRequest;
 import fr.itemmanage.itemmanage.dto.response.CategorieResponse;
 import fr.itemmanage.itemmanage.service.CategorieService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+@Tag(
+        name = "Catégories",
+        description = "Gestion des catégories de produits"
+)
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -18,13 +24,16 @@ public class CategorieController {
 
     private final CategorieService categorieService;
 
-    // GET /api/categories
+    @Operation(
+            summary = "Lister toutes les catégories",
+            description = "Retourne chaque catégorie avec le nombre de produits associés"
+    )
     @GetMapping
     public ResponseEntity<List<CategorieResponse>> getAll() {
         return ResponseEntity.ok(categorieService.getAll());
     }
 
-    // POST /api/categories
+    @Operation(summary = "Créer une nouvelle catégorie")
     @PostMapping
     public ResponseEntity<CategorieResponse> create(
             @Valid @RequestBody CategorieRequest request) {
@@ -38,7 +47,7 @@ public class CategorieController {
                 .body(response);
     }
 
-    // PUT /api/categories/{id}
+    @Operation(summary = "Renommer / mettre à jour une catégorie")
     @PutMapping("/{id}")
     public ResponseEntity<CategorieResponse> rename(
             @PathVariable String id,

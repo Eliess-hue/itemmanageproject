@@ -75,6 +75,12 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- ✅ La dépendance Swagger UI -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.8</version>
+		</dependency>
 		<!-- ✅ Les dépendances via TestContainers -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
