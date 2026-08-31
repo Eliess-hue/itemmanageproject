@@ -1,44 +1,44 @@
-# itemmanage-frontend
+# ItemManage — Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+[← Retour au README principal](../README.md)
 
-## Recommended IDE Setup
+Interface utilisateur développée avec Vue 3 pour l'application de gestion de stock ItemManage.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Prérequis
+* Node.js `^22.18.0` ou `>=24.12.0`
+* npm
 
-## Recommended Browser Setup
+## Configuration
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+L'URL de l'API backend est configurée via la variable d'environnement `VITE_API_URL`.
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+Créer un fichier `.env` à la racine de `itemmanage-frontend/` :
+```env
+VITE_API_URL=http://localhost:8080
 ```
 
-### Compile and Hot-Reload for Development
+## Lancer en local
 
-```sh
+```bash
+npm install
 npm run dev
 ```
 
-### Compile and Minify for Production
+L'application est alors disponible sur `http://localhost:5173`.
 
-```sh
+## Build de production
+
+```bash
 npm run build
+npm run preview
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+## Qualité de code
 
-```sh
+```bash
+# Linting (ESLint + oxlint)
 npm run lint
+
+# Formatage (Prettier)
+npm run format
 ```
